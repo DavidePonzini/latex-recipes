@@ -1,0 +1,536 @@
+\ProvidesPackage{davrecipes}
+
+
+% ----------------------------------------------------------------------------------------------------
+%   CORE PACKAGES
+% ----------------------------------------------------------------------------------------------------
+% \usepackage[utf8]{inputenc}                         % Support for non ASCII characters (e.g arabic)
+\usepackage{xparse}                                 % Custom commands
+\usepackage{multicol}                               % Two columns
+\usepackage{xfrac}                                  % Fractions
+\usepackage{wrapfig}                                % wraptable
+\makeatletter\def\WF@conflict{}\makeatother         % suppress wraptable errors - clashes with \lettrine
+\usepackage{lettrine}                               % steps
+\usepackage{ifthen}                                 % if ... then ... else ...
+\usepackage{titlesec}                               % recipe name formatting
+\usepackage{framed}                                 % introduction
+\usepackage[main=italian]{babel}           % Italian hyphenation, foreign language support
+
+% ----------------------------------------------------------------------------------------------------
+%   COOKING SYMBOLS
+% ----------------------------------------------------------------------------------------------------
+\usepackage{cookingsymbols}                     % Symbols
+\usepackage{tikzsymbols}                        % Symbols
+\let\Fire\relax                                 % \Fire is defined in both tikzsymbols and ifsym - this commands removes the first definition to suppress an error message
+\usepackage[clock, misc, weather]{ifsym}        % Symbols
+\usepackage{fontawesome}                       % Symbols
+
+% ----------------------------------------------------------------------------------------------------
+%   SPACING
+% ----------------------------------------------------------------------------------------------------
+\setlength{\parindent}{0cm}                     % Paragraph indentantion
+\setlength{\parskip}{2ex plus 0.5ex}            % Paragraph vertical space
+
+\setlength{\textwidth}{15.5cm}                  % Page useable space
+\setlength{\textheight}{24.0cm}                 % Page useable space
+\setlength{\topmargin}{-0.8cm}                  % Page margin
+\setlength{\evensidemargin}{-0.5cm}             % Page margin
+\setlength{\oddsidemargin}{0.5cm}               % Page margin
+
+% ----------------------------------------------------------------------------------------------------
+%   CUSTOM HEADERS
+% ----------------------------------------------------------------------------------------------------
+\usepackage{fancyhdr}                           % Fancy headers and footers
+\pagestyle{fancy}
+
+\renewcommand{\sectionmark}     [2] {\markboth  {\MakeUppercase{#1}}  {#2}  }   % Uppercase section names
+
+% \fakesection
+%   Adds a new (invisible) section, with proper handling of header marks
+%   #1: section name
+%   #2: first subsection name - optional
+\NewDocumentCommand\fakesection{m O{}}{%
+    \par\refstepcounter{section}          % Increase section counter
+    \sectionmark{#1}{#2}                  % Add section mark (header)
+    \addcontentsline{toc}{section}{#1}    % Add section to ToC
+}
+
+\fancyhf{}
+\fancyhead[R]{\rightmark}
+\fancyhead[L]{\leftmark}
+\setlength{\headheight}{14.5pt}                 % To suppress error message
+
+\renewcommand{\headrulewidth}{.5pt}
+% \renewcommand{\footrulewidth}{.5pt}
+
+
+% ----------------------------------------------------------------------------------------------------
+%   LINKS
+%       Note: package hyperref must be loaded as last package
+% ----------------------------------------------------------------------------------------------------
+\usepackage{hyperref}           
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
+% ----------------------------------------------------------------------------------------------------
+%   TOC
+% ----------------------------------------------------------------------------------------------------
+\setcounter{secnumdepth}{1}                     % subsections not numbered
+
+
+% \usepackage[utf8]{inputenc}
+% \usepackage[none]{hyphenat}
+% \usepackage{nameref}
+
+% ----------------------------------------------------------------------------------------------------
+%   COMMANDS
+% ----------------------------------------------------------------------------------------------------
+% DOCUMENT HEADER
+\NewDocumentCommand\makeheader{}{
+    \thispagestyle{empty}
+    
+    \maketitle
+    \vfill
+    \begin{center}
+        \scriptsize
+        \raisebox{-0.5pt}{\textbullet}
+        ~~Ultimo aggiornamento: \today~~
+        \raisebox{-0.5pt}{\textbullet}
+    \end{center}
+    \newpage
+    
+    \tableofcontents
+    \newpage
+}
+
+% RECIPE LINK
+\NewDocumentCommand\linkRecipe{m o}{%
+    \hyperlink{%
+        page.\getpagerefnumber{recipe:#1}%
+    }{%
+        \IfNoValueTF{#2}{#1}{#2}%
+    }%
+}
+
+% TIMES
+\NewDocumentCommand\timeS{m}{#1 sec}
+\NewDocumentCommand\timeM{m}{#1 min}
+\NewDocumentCommand\timeH{m}{#1 h}
+\NewDocumentCommand\timeD{m}{#1 giorni}
+
+% ABBREVIATIONS
+\NewDocumentCommand\temperature{m O{C}}{%
+    #1\ensuremath{^{\circ}\mathrm{#2}}%
+}
+\NewDocumentCommand\qb{}{q.b.}
+\renewcommand{\tilde}{$\sim$}
+\NewDocumentCommand\infinity{}{$\infty$}
+
+% FOREIGN LANGUAGES
+% \NewDocumentCommand\languageArabic{m}{%
+%     \foreignlanguage{arabic}{#1}
+% }
+
+
+\makeatletter
+
+% ----------------------------------------------------------------------------------------------------
+%   CONFIGURATION
+% ----------------------------------------------------------------------------------------------------
+\providecolor{DarkGreen}{rgb}{0, .5, 0}
+\providecolor{DarkGray}{rgb}{0.23, 0.23, 0.23}
+
+% recipe name font
+\titleformat{\subsection}{\Huge\color{DarkGreen}\bfseries}{\thesubsection}{1em}{}
+
+% ingredient font
+\NewExpandableDocumentCommand\recipe@font@ingredient        {m}     {%
+    % \textcolor{DarkGray}{#1}
+    \textcolor{black}{#1}%
+}
+
+% ingredient table size
+\NewDocumentCommand\recipe@size@ingredients                 {}      {%
+    0.45\textwidth
+}
+
+% step counter color
+\renewcommand{\LettrineFontHook}{%
+    \color{red}
+}
+
+% suggestion mark
+\NewDocumentCommand\recipe@font@suggestionmark              {m}     {%
+    \textcolor{red}{\textbf{#1}}%
+}
+
+% hint title
+\NewDocumentCommand\recipe@font@hint                        {m}     {%
+    {\Large \textcolor{red}{\textbf{#1}}}%
+}
+
+% ----------------------------------------------------------------------------------------------------
+% HEADER
+% ----------------------------------------------------------------------------------------------------
+% header environment
+\newenvironment{header}
+% before
+{
+    % initialise environment keys
+    %   global definitions are needed, since their values are set and retrieved in diffent command scopes
+    \gdef\recipe@source{}%
+    \gdef\recipe@portion{}%
+    \gdef\recipe@portionUnit{}%
+    \gdef\recipe@date{}%
+    
+    \begin{tabular}{c l}        % https://tug.ctan.org/info/symbols/comprehensive/symbols-a4.pdf
+}
+% after
+{
+        & \\
+        % call deferred fields
+        \recipe@header@portion      % portion
+        %                             % cost?
+        \recipe@header@source       % source
+        \recipe@header@date         % date
+        & \\
+    \end{tabular}
+}
+
+% \preparationTime
+% Display how long it takes to prepare this recipe. Can be specified multiple times
+% #1: time
+% #2: description - optional 
+\NewDocumentCommand\preparationTime     {m o}       {
+    \Gloves                                         &           #1 \IfNoValueTF{#2}{}{\textit{(#2)}} \\%
+}
+
+% \preparationWait
+% Display how long to wait when preparing a recipe. Can be specified multiple times
+% #1: time
+% #2: description - optional 
+\NewDocumentCommand\preparationWait     {m o}       {
+    \VarClock                                       &           #1 \IfNoValueTF{#2}{}{\textit{(#2)}} \\%
+}
+
+% \cookingTime
+% Display how long it takes to cook this recipe. Can be specified multiple times
+% #1: time
+% #2: flame temperature
+% #3: description - optional 
+\NewDocumentCommand\cookingTime         {m m o}     {
+    \fryingpan                                      &           #1, \ \Gasstove \ \ #2 \IfNoValueTF{#3}{}{\textit{(#3)}} \\%
+}
+    
+% \bakingTimeInternal
+% Display how long it takes to bake this recipe. Can be specified multiple times. For internal use only -- see next commands
+% #1: time
+% #2: temperature
+% #3: temperature unit measure (default: celsius (C))
+% #4: oven icon - omitted in specific commands
+% #5: description - optional 
+\NewDocumentCommand\bakingTimeInternal  {m m o m o}   {
+    \Oven                                           &           #1, \ \Thermo{4} \ \temperature{#2}[#3] \ #4\  \IfNoValueTF{#5}{}{\textit{(#5)}} \\%
+}
+% \bakingTime... [Bottom|Top|Topbottom|Fan]
+% Display how long it takes to bake this recipe. Can be specified multiple times
+% #1: time
+% #2: temperature
+% #3: description - optional 
+% #4: temperature unit measure (default: celsius (C))
+\NewDocumentCommand\bakingTimeBottom    {m m o o}     {\bakingTimeInternal{#1}{#2}[#4]  {\Bottomheat}       [#3]}
+\NewDocumentCommand\bakingTimeTop       {m m o o}     {\bakingTimeInternal{#1}{#2}[#4]  {\Topheat}          [#3]}
+\NewDocumentCommand\bakingTimeTopbottom {m m o o}     {\bakingTimeInternal{#1}{#2}[#4]  {\Topbottomheat}    [#3]}
+\NewDocumentCommand\bakingTimeFan       {m m o o}     {\bakingTimeInternal{#1}{#2}[#4]  {\Fanoven}          [#3]}
+
+% \source
+%   Display the source of this recipe. Can be used in any point of the header
+%   Actual execution is deferred (see function below and header environment).
+%   #1: the source
+\NewDocumentCommand\source{m}{%
+    \gdef\recipe@source{#1}%
+    \ignorespaces
+}
+\NewDocumentCommand\recipe@header@source{}{
+    \ifthenelse{\equal{\recipe@source}{}}
+    {}  % no value, do nothing
+    {\PaperPortrait                                  &           \recipe@source \\}
+}
+
+% \recipedate
+%   Display the date of this recipe. Can be used in any point of the header
+%   Actual execution is deferred (see function below and header environment).
+%   #1: the date
+\NewDocumentCommand\recipedate                      {m}         {%
+    \gdef\recipe@date{#1}%
+    \ignorespaces
+}
+\NewDocumentCommand\recipe@header@date{}{
+    \ifthenelse{\equal{\recipe@date}{}}
+    {}  % no value, do nothing
+    {\faCalendar                                     &           \recipe@date \\ }
+}
+
+% \portion
+%   Display how many portions this recipe is for. Can be used in any point of the header.
+%   Actual execution is deferred (see function below and header environment).
+%   #1: amount
+%   #2: measure unit - optional
+\NewDocumentCommand\portion                         {m O{}}       {%
+    \gdef\recipe@portion{#1}%
+    \gdef\recipe@portionUnit{#2}%
+    \ignorespaces
+    
+}
+\NewDocumentCommand\recipe@header@portion{}{
+    \ifthenelse{\equal{\recipe@portion}{}}
+        {}  % no value, do nothing
+        {\Dish                                           &           \recipe@portion{} \ifthenelse{\equal{\recipe@portionUnit}{}}%
+                                                                            {%
+                                                                            \ifthenelse{\equal{\recipe@portion}{1}}%
+                                                                                {porzione}%
+                                                                                {porzioni}%
+                                                                            }%
+                                                                            {\recipe@portionUnit}%
+                                                                        \\}
+}
+
+% ----------------------------------------------------------------------------------------------------
+%   INTRODUCTION
+% ----------------------------------------------------------------------------------------------------
+% introduction environment
+%   Adds an introduction to the recipe
+\newenvironment{introduction}
+% before
+{
+    \begin{framed}
+}
+% after
+{
+    \end{framed}
+}
+
+% ----------------------------------------------------------------------------------------------------
+%   INGREDIENTS
+% ----------------------------------------------------------------------------------------------------
+% ingredients environment
+%   Adds a section for ingredients
+%   (*): starred version doesn't use a wraptable (useful if there are no preparation steps)
+%   #1: size of the ingredient wrapfigure (package wrapfigure has trouble detecting appropriate size at times) - optional
+\newenvironment{ingredients*}
+% before
+{
+    \textbf{\recipe@font@ingredient{Ingredienti}}
+
+    \begin{tabular}{rl}
+        \multicolumn{2}{c}{} \\
+        % \hline
+}
+% after
+{
+    % \hline
+    \end{tabular}
+}
+
+\newenvironment{ingredients}[1][]
+% before
+{
+    \wraptable[#1]{r}{\recipe@size@ingredients}
+        \vspace{-1em}               % same height of ingredients and preparation
+        \begin{ingredients*}
+}
+% after
+{
+        \end{ingredients*}
+    \endwraptable
+}
+
+% \ingredient
+%   Adds a new ingredient
+%   #1 (*): makes the quantity display as "--" instead of "q.b."
+%   #2: quantity - optional. (If omitted, display "q.b.")
+%   #3: measure unit - optional
+%   #4: ingredient name
+\NewDocumentCommand\ingredient{s O{\qb} o m}{
+    \IfBooleanTF{#1}
+        {\recipe@font@ingredient{-{}-}      & \recipe@font@ingredient{#4} \\}               % starred version
+        {\IfNoValueTF{#3}           % normal version
+            {\recipe@font@ingredient{#2}        & \recipe@font@ingredient{#4} \\}
+            {\recipe@font@ingredient{#2 #3}     & \recipe@font@ingredient{#4} \\}
+        }
+}
+
+% \ingredientSection
+%   Adds a new section for ingredients
+%   #1 (*): no preceding empty row
+\NewExpandableDocumentCommand\ingredientSection{s m}{
+    \IfBooleanTF{#1}{}{\multicolumn{2}{c}{} \\}       % add an empty row if starred version
+    \multicolumn{2}{c}{\textit{\recipe@font@ingredient{#2:}}} \\
+    % \hline
+}
+
+% ----------------------------------------------------------------------------------------------------
+%   PREPARATION
+% ----------------------------------------------------------------------------------------------------
+\newcounter{step}
+
+% \preparation
+%   Adds a section for preparation steps
+\newenvironment{preparation}[1][]
+% before
+{
+    \setcounter{step}{0}
+    
+    \textbf{
+        Preparazione
+        \ifthenelse{\equal{#1}{}}
+        {}
+        {-- #1}
+    }
+}
+% after
+{
+
+}
+
+% \step
+%   Adds a new step for recipe preparation
+%   #1 (*): empty step - doesn't increment counter and doesn't display any number
+\NewDocumentCommand\step{s}{
+    \IfBooleanTF{#1}{
+        \stepNum{}
+    }
+    {
+        \stepcounter{step}
+        \stepNum{\thestep.}%
+    }%
+}
+
+\NewDocumentCommand\stepNum{m}{
+    \par \lettrine[
+        lines=2,
+        lraise=.15,
+        grid=true,
+        loversize=0.15,     % enlarges the height of the capital
+        findent=1em,        % gap between capital and intended text
+        nindent=0em         % shifts all intended lines, beginning with the second line
+    ]{#1}{}%                % `%` must remain here
+}
+
+% ----------------------------------------------------------------------------------------------------
+%   SUGGESTION
+% ----------------------------------------------------------------------------------------------------
+% \suggestionMark
+%   adds a marker before the suggestion
+\NewDocumentCommand{\suggestionMark}        {}      {%
+    \par\recipe@font@suggestionmark{* }%
+}
+
+% suggestion environment
+%   adds a section for suggestions
+%   #1: additional empty space to leave before the suggestions - optional
+\newenvironment{suggestion}[1][0cm]
+% before
+{
+    \vspace{#1}
+
+    \begin{center}
+        \begin{tikzpicture}[scale=1.5,
+            color=black, fill=DarkGray, thick,
+        ]
+            \filldraw (0,0) -- (-0.2, 0.1) -- (-4, 0) -- (-0.2, -0.1) -- cycle;
+            \filldraw (0,0) -- (0.2, 0.1) -- (4, 0) -- (0.2, -0.1) -- cycle;
+            \filldraw (0,0) circle (0.1);
+        \end{tikzpicture}    
+    \end{center}
+    
+}
+% after
+{}
+
+% ----------------------------------------------------------------------------------------------------
+%   HINT
+% ----------------------------------------------------------------------------------------------------
+% hint environment
+%   adds a note at the end of the recipe
+\newenvironment{hint}
+% before
+{
+    \vfill
+
+    \begin{tikzpicture}[scale=1,
+        line width=1.5pt, color=red
+    ]
+        \useasboundingbox (0,0) -- (4, 0) -- (4, 0.3) -- (0, 0.3) -- cycle;
+        
+        \draw (-0.4, 0) -- (-0.6, 0);
+        \draw (-0.3, 0) -- (3.5, 0);
+        \draw (3.6, 0) -- (3.8, 0);
+        
+        \draw (0, 0.4) -- (0, 0.6);
+        \draw (0, 0.3) -- (0, -2.5);
+        \draw (0, -2.6) -- (0, -2.8);
+    \end{tikzpicture}
+
+    \nopagebreak
+
+    \begingroup
+        \leftskip1em
+        \recipe@font@hint{Note}
+        \nopagebreak
+        
+        \itshape
+}
+% after
+{
+        \par
+    \endgroup
+}
+
+% ----------------------------------------------------------------------------------------------------
+% RECIPE ENVIRONMENT
+%   Main Recipe environment
+%       - Starred version does not include a \newpage, allowing multiple
+%       recipes on the same page
+%       - Normal version (not starred) includes a \newpage at the end
+% ----------------------------------------------------------------------------------------------------
+\newcommand{\phantompageref}{\def\@currentHref{page.\@the@H@page}}
+
+
+\define@key{recipe}{label}[]{\def\recipe@label{#1}}
+
+% Starred version (no \newpage at the end)
+\newenvironment{recipe*}[2][]
+% before
+{
+    \setkeys{recipe}{label, #1}
+
+    \ifthenelse{\equal{\recipe@label}{}}{}{
+        \label{recipe:\recipe@label}
+    }
+
+    \subsection{#2}
+}
+% after
+{
+
+}
+
+% Not starred version (includes \newpage at the end)
+\newenvironment{recipe}[2][]
+% before
+{
+    \begin{recipe*}[,#1]{#2}
+}
+% after
+{
+    \end{recipe*}
+    \newpage
+}
+
+\makeatother
