@@ -1,0 +1,50 @@
+\begin{recipe}[label=template]{Nome Ricetta}
+    \begin{header}
+        \portion{5}[piatti]
+        \source{Internet}
+        \recipedate{Luglio 2023}
+
+        \preparationTime     {\timeM{15}}
+        \preparationWait     {\timeM{5}}
+        \cookingTime         {\timeM{10}}{Fiamma alta}
+        \bakingTimeBottom    {\timeH{1}}{180}
+        \bakingTimeTop       {\timeH{1}}{180}
+        \bakingTimeTopbottom {\timeH{1}}{180}
+        \bakingTimeFan       {\timeH{1}}{180}
+    \end{header}
+
+    \begin{introduction}
+        Introduzione alla ricetta.
+    \end{introduction}
+
+    \begin{ingredients}
+    % \begin{ingredients*}        % per ricetta senza step preparazione
+        \ingredientSection*{Prima sezione}
+        \ingredient[100][g]{Farina}
+        \ingredient[2]{Pomodori}
+        
+        \ingredientSection{Sezione con spazio}
+        \ingredient{Sale}
+        \ingredient{Pepe}
+        
+        \ingredientSection*{Sezione senza spazio}
+        \ingredient*{Carta forno}
+    % \end{ingredients*}
+    \end{ingredients}
+
+    \begin{preparation}
+        \step Passaggio per preparare la ricetta.
+        \step Altro passaggio per preparare la ricetta.
+        \step* --- --- --- ---
+        \step Ultimo passaggio.
+    \end{preparation}
+
+    \begin{suggestion}[2cm]
+        \suggestionMark Consiglio da rispettare.
+        \suggestionMark Consiglio da rispettare.
+    \end{suggestion}
+
+    \begin{hint}
+        Note in fondo alla pagina.
+    \end{hint}
+\end{recipe}

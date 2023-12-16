@@ -15,6 +15,7 @@
 \usepackage{titlesec}                           % recipe name formatting
 \usepackage{framed}                             % introduction
 \usepackage[main=italian]{babel}                % Italian hyphenation, foreign language support
+\usepackage{titling}                            % use \author anywhere
 
 % ----------------------------------------------------------------------------------------------------
 %   COOKING SYMBOLS
@@ -38,7 +39,7 @@
 \setlength{\oddsidemargin}{0.5cm}               % Page margin
 
 % ----------------------------------------------------------------------------------------------------
-%   CUSTOM HEADERS
+%   CUSTOM HEADERS/FOOTERS
 % ----------------------------------------------------------------------------------------------------
 \usepackage{fancyhdr}                           % Fancy headers and footers
 \pagestyle{fancy}
@@ -58,10 +59,18 @@
 \fancyhf{}
 \fancyhead[R]{\rightmark}
 \fancyhead[L]{\leftmark}
+\fancyfoot[C]{
+    \scriptsize
+    \raisebox{-0.5pt}{\textbullet}
+    ~~\theauthor{} -- \today~~
+    \raisebox{-0.5pt}{\textbullet}
+}
 \setlength{\headheight}{14.5pt}                 % To suppress error message
 
 \renewcommand{\headrulewidth}{.5pt}
 % \renewcommand{\footrulewidth}{.5pt}
+
+\pagenumbering{gobble}                          % Remove page number (from title)
 
 
 % ----------------------------------------------------------------------------------------------------
@@ -95,13 +104,13 @@
     \thispagestyle{empty}
     
     \maketitle
-    \vfill
-    \begin{center}
-        \scriptsize
-        \raisebox{-0.5pt}{\textbullet}
-        ~~Ultimo aggiornamento: \today~~
-        \raisebox{-0.5pt}{\textbullet}
-    \end{center}
+    % \vfill
+    % \begin{center}
+    %     \scriptsize
+    %     \raisebox{-0.5pt}{\textbullet}
+    %     ~~Ultimo aggiornamento: \today~~
+    %     \raisebox{-0.5pt}{\textbullet}
+    % \end{center}
     \newpage
     
     \tableofcontents
