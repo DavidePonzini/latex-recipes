@@ -61,23 +61,21 @@
 \fancyhead[L]{\leftmark}
 \fancyfoot[C]{
     \scriptsize
-    \raisebox{-0.5pt}{\textbullet}
-    ~~\theauthor{} -- \today~~
-    \raisebox{-0.5pt}{\textbullet}
+    \raisebox{0.5pt}{\textbullet}
+    ~~\theauthor{} --- \today{}~~
+    \raisebox{0.5pt}{\textbullet}
 }
 \setlength{\headheight}{14.5pt}                 % To suppress error message
 
 \renewcommand{\headrulewidth}{.5pt}
 % \renewcommand{\footrulewidth}{.5pt}
 
-\pagenumbering{gobble}                          % Remove page number (from title)
-
 
 % ----------------------------------------------------------------------------------------------------
 %   LINKS
 %       Note: package hyperref must be loaded as last package
 % ----------------------------------------------------------------------------------------------------
-\usepackage{hyperref}           
+\usepackage{hyperref}
 
 \hypersetup{
     colorlinks=true,
@@ -102,7 +100,8 @@
 % DOCUMENT HEADER
 \NewDocumentCommand\makeheader{}{
     \thispagestyle{empty}
-    
+    \pagenumbering{gobble} % Suppress page numbering on title page
+
     \maketitle
     % \vfill
     % \begin{center}
@@ -115,6 +114,7 @@
     
     \tableofcontents
     \newpage
+    \pagenumbering{arabic} % Resume page numbering (otherwise links won't work)
 }
 
 % RECIPE LINK
